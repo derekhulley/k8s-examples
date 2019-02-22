@@ -1,0 +1,14 @@
+redis:
+  master:
+    cpu: 50m
+    memory: 50Mi
+  slave:
+    replicas: 1
+    cpu: 50m
+    memory: 50Mi 
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

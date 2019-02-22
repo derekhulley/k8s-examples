@@ -1,0 +1,13 @@
+gb:
+  replicas: 1 
+  cpu: 50m
+  memory: 50Mi
+
+redis:
+  enabled: false 
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
