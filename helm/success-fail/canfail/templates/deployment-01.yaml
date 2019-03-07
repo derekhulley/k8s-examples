@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: canfail-deployment
+  labels:
+    app: canfail
+spec:
+  replicas: 1 
+  selector:
+    matchLabels:
+      app: canfail
+  template:
+    metadata:
+      labels:
+        app: canfail
+    spec:
+      initContainers:
+      - name: busybox-app
+        image: "{{ .Values.busybox.image}}:{{ .Values.busybox.tag }}"
+        imagePullPolicy: {{ .Values.busybox.pullPolicy | quote }}
+        resources:
+          requests:
+            cpu: {{ .Values.requests.cpu }}
+            memory: {{ .Values.requests.memory }}
+        command:
+        - "sh"
+        - "-c"
+        - {{ .Values.command.init | quote }}
+      containers:
+      - name: busybox-init
+        image: "{{ .Values.busybox.image}}:{{ .Values.busybox.tag }}"
+        imagePullPolicy: {{ .Values.busybox.pullPolicy | quote }}
+        resources:
+          requests:
+            cpu: {{ .Values.requests.cpu }}
+            memory: {{ .Values.requests.memory }}
+        command:
+        - "sh"
+        - "-c"
+        - {{ .Values.command.appLoop | quote }}
+
