@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: canfail-deployment
+  name: canfail-app
   labels:
     app: canfail
 spec:
@@ -15,19 +15,28 @@ spec:
         app: canfail
     spec:
       initContainers:
-      - name: busybox-app
+      - name: canfail-app
         image: "{{ .Values.busybox.image}}:{{ .Values.busybox.tag }}"
         imagePullPolicy: {{ .Values.busybox.pullPolicy | quote }}
         resources:
           requests:
             cpu: {{ .Values.requests.cpu }}
             memory: {{ .Values.requests.memory }}
+        {{ if .Values.fail.init}}
+        command:
+          # Go with init FAIL
+          - "sh"
+          - "-c"
+          - {{ .Values.command.initFail | quote }}
+        {{ else }}
+        # Go with init SUCCESS
         command:
         - "sh"
         - "-c"
-        - {{ .Values.command.init | quote }}
+        - {{ .Values.command.initSuccess | quote }}
+        {{ end }}
       containers:
-      - name: busybox-init
+      - name: canfail-app-init
         image: "{{ .Values.busybox.image}}:{{ .Values.busybox.tag }}"
         imagePullPolicy: {{ .Values.busybox.pullPolicy | quote }}
         resources:
@@ -38,4 +47,3 @@ spec:
         - "sh"
         - "-c"
         - {{ .Values.command.appLoop | quote }}
-

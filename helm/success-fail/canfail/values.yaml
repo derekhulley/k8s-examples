@@ -11,6 +11,13 @@ requests:
   cpu: 100m
   memory: 128Mi
 
+fail:
+  init: false
+  job: false
+
 command:
-  init: "echo $HOSTNAME is an init container and will be done soon && sleep 10 && exit 0"
   appLoop: "echo $HOSTNAME will run for an hour && while true; do sleep 3600; done"
+  initSuccess: "echo $HOSTNAME is an init container that will SUCCEED soon && sleep 10 && exit 0"
+  initFail: "echo $HOSTNAME is an init container that will FAIL soon && sleep 10 && exit 1"
+  jobSuccess: "echo $HOSTNAME is a job that will SUCCEED soon && sleep 20 && exit 0"
+  jobFail: "echo $HOSTNAME is a job that will FAIL soon && sleep 20 && exit 1"

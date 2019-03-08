@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: canfail-job
+  labels:
+    app: canfail
+spec:
+  template:
+    metadata:
+      labels:
+        app: canfail
+    spec:
+      containers:
+      - name: canfail-job
+        image: "{{ .Values.busybox.image}}:{{ .Values.busybox.tag }}"
+        imagePullPolicy: {{ .Values.busybox.pullPolicy | quote }}
+        resources:
+          requests:
+            cpu: {{ .Values.requests.cpu }}
+            memory: {{ .Values.requests.memory }}
+        {{ if .Values.fail.job}}
+        command:
+          # Go with job FAIL
+          - "sh"
+          - "-c"
+          - {{ .Values.command.jobFail | quote }}
+        {{ else }}
+        # Go with job SUCCESS
+        command:
+        - "sh"
+        - "-c"
+        - {{ .Values.command.jobSuccess | quote }}
+        {{ end }}
+      restartPolicy: Never
+  backoffLimit: 1
