@@ -11,9 +11,8 @@ requests:
   cpu: 100m
   memory: 128Mi
 
-fail:
-  init: false
-  job: false
+failJob: false
+failInit: false
 
 command:
   appLoop: "echo $HOSTNAME will run for an hour && while true; do sleep 3600; done"

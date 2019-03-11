@@ -22,7 +22,7 @@ spec:
           requests:
             cpu: {{ .Values.requests.cpu }}
             memory: {{ .Values.requests.memory }}
-        {{ if .Values.fail.init}}
+        {{ if .Values.failInit}}
         command:
           # Go with init FAIL
           - "sh"
