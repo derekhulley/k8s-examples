@@ -54,8 +54,17 @@ function recordHistory()
     echo "---------- COMMAND HISTORY ----------------" >> $RESULT_FILE
     history >> $RESULT_FILE
 }
-trap recordHistory 0 1 2 3 6 15
-trap "cat $RESULT_FILE" 1
+function logExit()
+{
+    EXIT_CODE=$?
+    recordHistory
+    if [[ $EXIT_CODE == 0 ]]; then
+        echo "Install success: See $RESULT_FILE for full details."
+    else
+        echo "Install failure: See $RESULT_FILE for full details."
+    fi
+}
+trap logExit 0 1 2 3 6 15
 
 echo "---------- SCRIPT PARAMETERS --------------" >> $RESULT_FILE
 echo "User $USER ran $0 with parameters:" >> $RESULT_FILE
@@ -75,11 +84,16 @@ fi
 
 # Check that Helm is working
 echo "---------- BASIC CHECKS -------------------" >> $RESULT_FILE
-echo "helm version:" >> $RESULT_FILE
+echo "helm:" >> $RESULT_FILE
+echo "HELM_HOME: $HELM_HOME" >> $RESULT_FILE
 helm version >> $RESULT_FILE
 echo "" >> $RESULT_FILE
-echo "kubectl version" >> $RESULT_FILE
+echo "kubectl:" >> $RESULT_FILE
+echo "KUBECONFIG: $KUBECONFIG" >> $RESULT_FILE
+kubectl config get-contexts >> $RESULT_FILE
 kubectl version >> $RESULT_FILE
+echo "" >> $RESULT_FILE
+echo "kubectl config:" >> $RESULT_FILE
 
 # Check the chart
 echo "---------- CHART CHECKS -------------------" >> $RESULT_FILE
@@ -93,29 +107,34 @@ fi
 EXISTING=$(helm list -q $RELEASE --namespace $NAMESPACE)
 if [[ $EXISTING ]]; then
     echo "---------- HELM HISTORY -------------------" >> $RESULT_FILE
-    eval "helm history $RELEASE" >> $RESULT_FILE
+    helm history $RELEASE >> $RESULT_FILE
 fi
+
+function k8sFailure()
+{
+    echo "---------- FAILURE --------------------" >> $RESULT_FILE
+    helm history $RELEASE >> $RESULT_FILE
+    helm status $RELEASE >> $RESULT_FILE
+    echo "" >> $RESULT_FILE
+    kubectl get all -n $NAMESPACE -l $POD_SELECTOR >> $RESULT_FILE
+    exit 1
+}
 
 echo "---------- HELM EXECUTION -----------------" >> $RESULT_FILE
 HELM_COMMAND="helm upgrade $RELEASE $CHART --install --force --values $VALUES --namespace $NAMESPACE --wait --timeout $TIMEOUT"
 eval $HELM_COMMAND >> $RESULT_FILE
 HELM_COMMAND_CODE=$?
 
-function k8sFailure()
-{
-    echo "---------- FAILURE --------------------" >> $RESULT_FILE
-    helm status $RELEASE -o yaml >> $RESULT_FILE
-    echo "" >> $RESULT_FILE
-    kubectl get all -n $NAMESPACE -o yaml -l $POD_SELECTOR >> $RESULT_FILE
-    exit 1
-}
+if [[ "$HELM_COMMAND_CODE" = "1" ]]; then
+    k8sFailure
+fi
 
 echo "---------- K8S GENERAL CHECK --------------" >> $RESULT_FILE
 sleep $TIMEOUT
 K8S_ERROR_COUNT=$(kubectl get all -n $NAMESPACE -o yaml -l $POD_SELECTOR | grep -c -G Error)
 K8S_FAILED_COUNT=$(kubectl get all -n $NAMESPACE -o yaml -l $POD_SELECTOR | grep -c -G 'failed:')
 
-if [[ "$HELM_COMMAND_CODE" = "1" ]] || [[ $K8S_ERROR_COUNT > 0 ]] || [[ $K8S_FAILED_COUNT > 0 ]]; then
+if [[ $K8S_ERROR_COUNT > 0 ]] || [[ $K8S_FAILED_COUNT > 0 ]]; then
     k8sFailure
 fi
 
@@ -131,5 +150,4 @@ else
 fi
 
 # Success
-echo "Install success: See $RESULT_FILE for full details."
 exit 0
