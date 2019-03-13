@@ -20,7 +20,7 @@ done
 
 # Mandatory arguments
 if [[ -z "$NAMESPACE" ]] || [[ -z "$CHART" ]] || [[ -z "$RELEASE" ]] || [[ -z "$POD_SELECTOR" ]]; then
-    echo "usage: $0 namespace=<namespace> chart=<chart-location> release=<release-name> pod-search=<pod-search> [values=<values-file>] [--timeout=<timeout|60s>]"
+    echo "usage: $0 namespace=<namespace> chart=<chart-location> release=<release-name> pod-selector=<pod-selector> [values=<values-file>] [--timeout=<timeout|60s>]"
     echo "      namespace:      Kubernetes namespace to use"
     echo "      chart:          location of the Helm chart"
     echo "      release:        release name"
